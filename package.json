@@ -1,16 +1,16 @@
 {
-  "name": "typescript-action",
-  "description": "GitHub Actions TypeScript template",
+  "name": "dispatch-remote-workflow-sync",
+  "description": "GitHub Actions to dispacth a remote workflow and wait for it to end",
   "version": "0.0.0",
   "author": "",
   "private": true,
-  "homepage": "https://github.com/actions/typescript-action",
+  "homepage": "https://github.com/stephdotnet/dispatch-remote-workflow-sync",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/actions/typescript-action.git"
+    "url": "git+https://github.com/stephdotnet/dispatch-remote-workflow-sync.git"
   },
   "bugs": {
-    "url": "https://github.com/actions/typescript-action/issues"
+    "url": "https://github.com/stephdotnet/dispatch-remote-workflow-sync/issues"
   },
   "keywords": [
     "actions",
