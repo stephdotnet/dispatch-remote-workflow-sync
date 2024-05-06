@@ -218,13 +218,6 @@ export async function getWorkflowRunJobSteps(runId: number): Promise<string[]> {
       run_id: runId
     })
 
-    // https://docs.github.com/en/rest/reference/actions#list-jobs-for-a-workflow-run
-    const response2 = await octokit.rest.actions.getWorkflowRun({
-      owner: config.owner,
-      repo: config.repo,
-      run_id: runId
-    })
-
     if (response.status !== 200) {
       throw new Error(
         `Failed to get Workflow Run Jobs, expected 200 but received ${response.status}`
@@ -491,7 +484,7 @@ export async function getWorkflowRunActiveJobUrlRetry(
 export async function retryOnError<T>(
   func: () => Promise<T>,
   name: string,
-  timeout: number = 5000
+  timeout = 5000
 ): Promise<T> {
   const startTime = Date.now()
   let elapsedTime = Date.now() - startTime

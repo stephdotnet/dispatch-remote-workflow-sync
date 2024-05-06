@@ -64,24 +64,24 @@ describe('config', () => {
   it('should throw if invalid workflow inputs JSON is provided', () => {
     inputs.workflow_inputs = '{'
 
-    expect(() => getConfig()).toThrowError()
+    expect(() => getConfig()).toThrow()
   })
 
   it('should handle workflow inputs JSON containing strings numbers or booleans', () => {
     inputs.workflow_inputs = '{"cake":"delicious","pie":9001,"parfait":false}'
 
-    expect(() => getConfig()).not.toThrowError()
+    expect(() => getConfig()).not.toThrow()
   })
 
   it("should throw if a workflow inputs JSON doesn't contain strings numbers or booleans", () => {
     inputs.workflow_inputs = '{"pie":{"powerLevel":9001}}'
-    expect(() => getConfig()).toThrowError('"pie" value is object')
+    expect(() => getConfig()).toThrow('"pie" value is object')
 
     inputs.workflow_inputs = '{"vegetable":null}'
-    expect(() => getConfig()).toThrowError('"vegetable" value is null')
+    expect(() => getConfig()).toThrow('"vegetable" value is null')
 
     inputs.workflow_inputs = '{"fruit":[]}'
-    expect(() => getConfig()).toThrowError('"fruit" value is Array')
+    expect(() => getConfig()).toThrow('"fruit" value is Array')
   })
   afterEach(() => {
     jest.restoreAllMocks()
@@ -109,7 +109,7 @@ const output = {
   repo: 'my-repo',
   owner: 'the-owner',
   workflow: 'workflow.yml',
-  workflowInputs: workflowInputs,
+  workflowInputs,
   workflowTimeoutSeconds: 60,
   pollIntervalMs: 60
 }

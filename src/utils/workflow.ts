@@ -17,7 +17,7 @@ import * as core from '@actions/core'
 const WORKFLOW_FETCH_TIMEOUT_MS = 60 * 1000
 const WORKFLOW_JOB_STEPS_RETRY_MS = 5000
 
-export async function getWorkflowId(config: ActionConfig) {
+export async function getWorkflowId(config: ActionConfig): Promise<number> {
   if (typeof config.workflow === 'string') {
     core.info(`Fetching Workflow ID for ${config.workflow}...`)
     return await getWorkflowIdApi(config.workflow)
@@ -30,7 +30,7 @@ export async function getWorkflowRunId(
   config: ActionConfig,
   workflowId: number,
   DISTINCT_ID: string
-) {
+): Promise<number | undefined> {
   const startTime = Date.now()
   const timeoutMs = config.workflowTimeoutSeconds * 1000
   let attemptNo = 0
@@ -45,7 +45,7 @@ export async function getWorkflowRunId(
 
     // Get all runs for a given workflow ID
     const workflowRunIds = await retryOrDie(
-      () => getWorkflowRunIds(workflowId),
+      async () => getWorkflowRunIds(workflowId),
       WORKFLOW_FETCH_TIMEOUT_MS > timeoutMs
         ? timeoutMs
         : WORKFLOW_FETCH_TIMEOUT_MS
@@ -97,7 +97,7 @@ export async function getWorkflowRunId(
 export async function waitWorkflowRunFinish(
   config: ActionConfig,
   runId: number
-) {
+): Promise<boolean> {
   const startTime = Date.now()
 
   const timeoutMs = config.workflowTimeoutSeconds * 1000

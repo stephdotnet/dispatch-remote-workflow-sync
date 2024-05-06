@@ -30136,12 +30136,6 @@ async function getWorkflowRunJobSteps(runId) {
             repo: config.repo,
             run_id: runId
         });
-        // https://docs.github.com/en/rest/reference/actions#list-jobs-for-a-workflow-run
-        const response2 = await octokit.rest.actions.getWorkflowRun({
-            owner: config.owner,
-            repo: config.repo,
-            run_id: runId
-        });
         if (response.status !== 200) {
             throw new Error(`Failed to get Workflow Run Jobs, expected 200 but received ${response.status}`);
         }
@@ -30512,7 +30506,7 @@ function getWorkflowInputs(workflowInputs) {
 function getWorkflowValue(workflowInput) {
     try {
         // We can assume that the string is defined and not empty at this point.
-        return getNumberFromValue(workflowInput);
+        return getNumberFromValue(workflowInput) || workflowInput;
     }
     catch {
         // Assume using a workflow name instead of an ID.
@@ -30577,7 +30571,7 @@ async function getWorkflowRunId(config, workflowId, DISTINCT_ID) {
         elapsedTime = Date.now() - startTime;
         core.debug(`Attempting to fetch Run IDs for Workflow ID ${workflowId}`);
         // Get all runs for a given workflow ID
-        const workflowRunIds = await (0, api_1.retryOrDie)(() => (0, api_1.getWorkflowRunIds)(workflowId), WORKFLOW_FETCH_TIMEOUT_MS > timeoutMs
+        const workflowRunIds = await (0, api_1.retryOrDie)(async () => (0, api_1.getWorkflowRunIds)(workflowId), WORKFLOW_FETCH_TIMEOUT_MS > timeoutMs
             ? timeoutMs
             : WORKFLOW_FETCH_TIMEOUT_MS);
         core.debug(`Attempting to get step names for Run IDs: [${workflowRunIds}]`);

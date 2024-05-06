@@ -119,7 +119,7 @@ function getWorkflowInputs(
 function getWorkflowValue(workflowInput: string): string | number {
   try {
     // We can assume that the string is defined and not empty at this point.
-    return getNumberFromValue(workflowInput)!
+    return getNumberFromValue(workflowInput) || workflowInput
   } catch {
     // Assume using a workflow name instead of an ID.
     return workflowInput
