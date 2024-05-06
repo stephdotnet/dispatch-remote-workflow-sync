@@ -1,183 +1,88 @@
-# Create a GitHub Action Using TypeScript
+# Dispatch remote workflow sync
 
 [![GitHub Super-Linter](https://github.com/stephdotnet/dispatch-remote-workflow-sync/actions/workflows/linter.yml/badge.svg)](https://github.com/super-linter/super-linter)
 ![CI](https://github.com/stephdotnet/dispatch-remote-workflow-sync/actions/workflows/ci.yml/badge.svg)
 [![Check dist/](https://github.com/stephdotnet/dispatch-remote-workflow-sync/actions/workflows/check-dist.yml/badge.svg)](https://github.com/stephdotnet/dispatch-remote-workflow-sync/actions/workflows/check-dist.yml)
 [![Coverage](./badges/coverage.svg)](./badges/coverage.svg)
 
-Use this template to bootstrap the creation of a TypeScript action. :rocket:
+Created with:
 
-This template includes compilation support, tests, a validation workflow,
-publishing, and versioning guidance.
+- https://github.com/actions/typescript-action
 
-If you are new, there's also a simpler introduction in the
-[Hello world JavaScript action repository](https://github.com/actions/hello-world-javascript-action).
+Based on:
 
-## Create Your Own Action
+- https://github.com/Codex-/return-dispatch
+- https://github.com/Codex-/await-remote-run
 
-To create your own action, you can use this repository as a template! Just
-follow the below instructions:
+## Usage
 
-1. Click the **Use this template** button at the top of the repository
-1. Select **Create a new repository**
-1. Select an owner and name for your new repository
-1. Click **Create repository**
-1. Clone your new repository
+Ensure you have configured your remote action correctly, see below for an
+example.
 
-> [!IMPORTANT]
->
-> Make sure to remove or update the [`CODEOWNERS`](./CODEOWNERS) file! For
-> details on how to use this file, see
-> [About code owners](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners).
-
-## Initial Setup
-
-After you've cloned the repository to your local machine or codespace, you'll
-need to perform some initial setup steps before you can develop your action.
-
-> [!NOTE]
->
-> You'll need to have a reasonably modern version of
-> [Node.js](https://nodejs.org) handy (20.x or later should work!). If you are
-> using a version manager like [`nodenv`](https://github.com/nodenv/nodenv) or
-> [`nvm`](https://github.com/nvm-sh/nvm), this template has a `.node-version`
-> file at the root of the repository that will be used to automatically switch
-> to the correct version when you `cd` into the repository. Additionally, this
-> `.node-version` file is used by GitHub Actions in any `actions/setup-node`
-> actions.
-
-1. :hammer_and_wrench: Install the dependencies
-
-   ```bash
-   npm install
-   ```
-
-1. :building_construction: Package the TypeScript for distribution
-
-   ```bash
-   npm run bundle
-   ```
-
-1. :white_check_mark: Run the tests
-
-   ```bash
-   $ npm test
-
-   PASS  ./index.test.js
-     ✓ throws invalid number (3ms)
-     ✓ wait 500 ms (504ms)
-     ✓ test runs (95ms)
-
-   ...
-   ```
-
-## Update the Action Metadata
-
-The [`action.yml`](action.yml) file defines metadata about your action, such as
-input(s) and output(s). For details about this file, see
-[Metadata syntax for GitHub Actions](https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions).
-
-When you copy this repository, update `action.yml` with the name, description,
-inputs, and outputs for your action.
-
-## Update the Action Code
-
-The [`src/`](./src/) directory is the heart of your action! This contains the
-source code that will be run when your action is invoked. You can replace the
-contents of this directory with your own code.
-
-There are a few things to keep in mind when writing your action code:
-
-- Most GitHub Actions toolkit and CI/CD operations are processed asynchronously.
-  In `main.ts`, you will see that the action is run in an `async` function.
-
-  ```javascript
-  import * as core from '@actions/core'
-  //...
-
-  async function run() {
-    try {
-      //...
-    } catch (error) {
-      core.setFailed(error.message)
-    }
-  }
-  ```
-
-  For more information about the GitHub Actions toolkit, see the
-  [documentation](https://github.com/actions/toolkit/blob/master/README.md).
-
-So, what are you waiting for? Go ahead and start customizing your action!
-
-1. Create a new branch
-
-   ```bash
-   git checkout -b releases/v1
-   ```
-
-1. Replace the contents of `src/` with your action code
-1. Add tests to `__tests__/` for your source code
-1. Format, test, and build the action
-
-   ```bash
-   npm run all
-   ```
-
-   > This step is important! It will run [`ncc`](https://github.com/vercel/ncc)
-   > to build the final JavaScript action code with all dependencies included.
-   > If you do not run this step, your action will not work correctly when it is
-   > used in a workflow. This step also includes the `--license` option for
-   > `ncc`, which will create a license file for all of the production node
-   > modules used in your project.
-
-1. Commit your changes
-
-   ```bash
-   git add .
-   git commit -m "My first action is ready!"
-   ```
-
-1. Push them to your repository
-
-   ```bash
-   git push -u origin releases/v1
-   ```
-
-1. Create a pull request and get feedback on your action
-1. Merge the pull request into the `main` branch
-
-Your action is now published! :rocket:
-
-For information about versioning your action, see
-[Versioning](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md)
-in the GitHub Actions toolkit.
-
-## Validate the Action
-
-You can now validate the action by referencing it in a workflow file. For
-example, [`ci.yml`](./.github/workflows/ci.yml) demonstrates how to reference an
-action in the same repository.
+### Dispatching Repository Action
 
 ```yaml
 steps:
-  - name: Checkout
-    id: checkout
-    uses: actions/checkout@v4
-
-  - name: Test Local Action
-    id: test-action
-    uses: ./
+  - name: Dispatch an action and get the run ID
+    uses: stephdotnet/dispatch-remote-workflow-sync@main
+    id: dispatch-sync
     with:
-      milliseconds: 1000
+      token: ${{ secrets.TOKEN }} # Note this is NOT GITHUB_TOKEN but a PAT
+      ref: target_branch # or refs/heads/target_branch
+      repo: repository-name
+      owner: repository-owner
+      workflow: automation-test.yml
+      workflow_inputs: '{ "some_input": "value" }' # Optional
+      workflow_timeout_seconds: 120 # Default: 300
 
-  - name: Print Output
-    id: output
-    run: echo "${{ steps.test-action.outputs.time }}"
+  - name: Use the output run ID
+    run: echo ${{steps.return_dispatch.outputs.run_id}}
 ```
 
-For example workflow runs, check out the
-[Actions tab](https://github.com/stephdotnet/dispatch-remote-workflow-sync/actions)!
-:rocket:
+### Receiving Repository Action
+
+In the earliest possible stage for the Action, add the input into the name.
+
+As every step needs a `uses` or `run`, simply `echo` the ID or similar to
+satisfy this requirement.
+
+```yaml
+name: action-test
+on:
+  workflow_dispatch:
+    inputs:
+      distinct_id:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: echo distinct ID ${{ github.event.inputs.distinct_id }}
+        run: echo ${{ github.event.inputs.distinct_id }}
+```
+
+## Token
+
+To be able to use dispatch we need to use a token which has `repo` permissions.
+`GITHUB_TOKEN` currently does not allow adding permissions for `repo` level
+permissions currently so a Personal Access Token (PAT) must be used.
+
+### Permissions Required
+
+The permissions required for this action to function correctly are:
+
+- `repo` scope
+  - You may get away with simply having `repo:public_repo`
+  - `repo` is definitely needed if the repository is private.
+- `actions:read`
+- `actions:write`
+
+## Additional notes
+
+See:
+
+- https://github.com/Codex-/return-dispatch/blob/main/README.md
+- https://github.com/Codex-/await-remote-run/blob/main/README.md
 
 ## Publishing a New Release
 
