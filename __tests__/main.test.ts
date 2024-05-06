@@ -1,89 +1,96 @@
-/**
- * Unit tests for the action's main functionality, src/main.ts
- *
- * These should be run as if the action was called from a workflow.
- * Specifically, the inputs listed in `action.yml` should be set as environment
- * variables following the pattern `INPUT_<INPUT_NAME>`.
- */
-
 import * as core from '@actions/core'
 import * as main from '../src/main'
+import * as UtilsConfig from '../src/utils/config'
+import * as api from '../src/utils/api'
+import * as workflow from '../src/utils/workflow'
 
 // Mock the action's main function
 const runMock = jest.spyOn(main, 'run')
 
-// Other utilities
-const timeRegex = /^\d{2}:\d{2}:\d{2}/
-
 // Mock the GitHub Actions core library
-let debugMock: jest.SpiedFunction<typeof core.debug>
-let errorMock: jest.SpiedFunction<typeof core.error>
-let getInputMock: jest.SpiedFunction<typeof core.getInput>
 let setFailedMock: jest.SpiedFunction<typeof core.setFailed>
-let setOutputMock: jest.SpiedFunction<typeof core.setOutput>
+
+let getConfigMock: jest.SpiedFunction<typeof UtilsConfig.getConfig>
+let apiInitMock: jest.SpiedFunction<typeof api.init>
+let dispatchWorkflowMock: jest.SpiedFunction<typeof api.dispatchWorkflow>
+let getWorkflowIdMock: jest.SpiedFunction<typeof workflow.getWorkflowId>
+let getWorkflowRunIdMock: jest.SpiedFunction<typeof workflow.getWorkflowRunId>
+let waitWorkflowRunFinishMock: jest.SpiedFunction<
+  typeof workflow.waitWorkflowRunFinish
+>
 
 describe('action', () => {
   beforeEach(() => {
     jest.clearAllMocks()
 
-    debugMock = jest.spyOn(core, 'debug').mockImplementation()
-    errorMock = jest.spyOn(core, 'error').mockImplementation()
-    getInputMock = jest.spyOn(core, 'getInput').mockImplementation()
     setFailedMock = jest.spyOn(core, 'setFailed').mockImplementation()
-    setOutputMock = jest.spyOn(core, 'setOutput').mockImplementation()
+
+    getConfigMock = jest.spyOn(UtilsConfig, 'getConfig').mockImplementation()
+    apiInitMock = jest.spyOn(api, 'init').mockImplementation()
+    dispatchWorkflowMock = jest
+      .spyOn(api, 'dispatchWorkflow')
+      .mockImplementation()
+    getWorkflowIdMock = jest
+      .spyOn(workflow, 'getWorkflowId')
+      .mockImplementation()
+    getWorkflowRunIdMock = jest
+      .spyOn(workflow, 'getWorkflowRunId')
+      .mockImplementation()
+    waitWorkflowRunFinishMock = jest
+      .spyOn(workflow, 'waitWorkflowRunFinish')
+      .mockImplementation()
   })
 
-  it('sets the time output', async () => {
-    // Set the action's inputs as return values from core.getInput()
-    getInputMock.mockImplementation(name => {
-      switch (name) {
-        case 'milliseconds':
-          return '500'
-        default:
-          return ''
-      }
+  it('does not call setFailed when workflowRunId returned', async () => {
+    getWorkflowIdMock.mockImplementation(async () => Promise.resolve(123456))
+    getWorkflowRunIdMock.mockImplementation(async () => Promise.resolve(123456))
+
+    await main.run()
+    expect(runMock).toHaveReturned()
+
+    expect(getConfigMock).toHaveBeenCalledTimes(1)
+    expect(apiInitMock).toHaveBeenCalled()
+
+    expect(dispatchWorkflowMock).toHaveBeenCalledTimes(1)
+    expect(getWorkflowIdMock).toHaveBeenCalled()
+    expect(waitWorkflowRunFinishMock).toHaveBeenCalled()
+
+    expect(setFailedMock).not.toHaveBeenCalled()
+  })
+
+  it('calls setFailed when no workflowRunId returned', async () => {
+    getWorkflowIdMock.mockImplementation(async () => Promise.resolve(123456))
+    getWorkflowRunIdMock.mockImplementation(async () =>
+      Promise.resolve(undefined)
+    )
+
+    await main.run()
+    expect(runMock).toHaveReturned()
+
+    expect(getConfigMock).toHaveBeenCalledTimes(1)
+    expect(apiInitMock).toHaveBeenCalled()
+
+    expect(dispatchWorkflowMock).toHaveBeenCalledTimes(1)
+    expect(getWorkflowIdMock).toHaveBeenCalled()
+
+    expect(setFailedMock).toHaveBeenCalled()
+  })
+
+  it('calls setFailed when error Thrown', async () => {
+    getWorkflowIdMock.mockImplementation(async () => Promise.resolve(123456))
+    getWorkflowRunIdMock.mockImplementation(() => {
+      throw new Error()
     })
 
     await main.run()
     expect(runMock).toHaveReturned()
 
-    // Verify that all of the core library functions were called correctly
-    expect(debugMock).toHaveBeenNthCalledWith(1, 'Waiting 500 milliseconds ...')
-    expect(debugMock).toHaveBeenNthCalledWith(
-      2,
-      expect.stringMatching(timeRegex)
-    )
-    expect(debugMock).toHaveBeenNthCalledWith(
-      3,
-      expect.stringMatching(timeRegex)
-    )
-    expect(setOutputMock).toHaveBeenNthCalledWith(
-      1,
-      'time',
-      expect.stringMatching(timeRegex)
-    )
-    expect(errorMock).not.toHaveBeenCalled()
-  })
+    expect(getConfigMock).toHaveBeenCalledTimes(1)
+    expect(apiInitMock).toHaveBeenCalled()
 
-  it('sets a failed status', async () => {
-    // Set the action's inputs as return values from core.getInput()
-    getInputMock.mockImplementation(name => {
-      switch (name) {
-        case 'milliseconds':
-          return 'this is not a number'
-        default:
-          return ''
-      }
-    })
+    expect(dispatchWorkflowMock).toHaveBeenCalledTimes(1)
+    expect(getWorkflowIdMock).toHaveBeenCalled()
 
-    await main.run()
-    expect(runMock).toHaveReturned()
-
-    // Verify that all of the core library functions were called correctly
-    expect(setFailedMock).toHaveBeenNthCalledWith(
-      1,
-      'milliseconds not a number'
-    )
-    expect(errorMock).not.toHaveBeenCalled()
+    expect(setFailedMock).toHaveBeenCalled()
   })
 })
