@@ -3,7 +3,6 @@
 [![GitHub Super-Linter](https://github.com/stephdotnet/dispatch-remote-workflow-sync/actions/workflows/linter.yml/badge.svg)](https://github.com/super-linter/super-linter)
 ![CI](https://github.com/stephdotnet/dispatch-remote-workflow-sync/actions/workflows/ci.yml/badge.svg)
 [![Check dist/](https://github.com/stephdotnet/dispatch-remote-workflow-sync/actions/workflows/check-dist.yml/badge.svg)](https://github.com/stephdotnet/dispatch-remote-workflow-sync/actions/workflows/check-dist.yml)
-[![CodeQL](https://github.com/stephdotnet/dispatch-remote-workflow-sync/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/stephdotnet/dispatch-remote-workflow-sync/actions/workflows/codeql-analysis.yml)
 [![Coverage](./badges/coverage.svg)](./badges/coverage.svg)
 
 Use this template to bootstrap the creation of a TypeScript action. :rocket:
@@ -179,34 +178,6 @@ steps:
 For example workflow runs, check out the
 [Actions tab](https://github.com/stephdotnet/dispatch-remote-workflow-sync/actions)!
 :rocket:
-
-## Usage
-
-After testing, you can create version tag(s) that developers can use to
-reference different stable versions of your action. For more information, see
-[Versioning](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md)
-in the GitHub Actions toolkit.
-
-To include the action in a workflow in another repository, you can use the
-`uses` syntax with the `@` symbol to reference a specific branch, tag, or commit
-hash.
-
-```yaml
-steps:
-  - name: Checkout
-    id: checkout
-    uses: actions/checkout@v4
-
-  - name: Test Local Action
-    id: test-action
-    uses: stephdotnet/dispatch-remote-workflow-sync@v1 # Commit with the `v1` tag
-    with:
-      milliseconds: 1000
-
-  - name: Print Output
-    id: output
-    run: echo "${{ steps.test-action.outputs.time }}"
-```
 
 ## Publishing a New Release
 

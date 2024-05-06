@@ -8,6 +8,9 @@
 
 import * as core from '@actions/core'
 import * as main from '../src/main'
+import * as UtilsConfig from '../src/utils/config'
+import * as api from '../src/utils/api'
+import * as workflow from '../src/utils/workflow'
 
 // Mock the action's main function
 const runMock = jest.spyOn(main, 'run')
@@ -16,31 +19,72 @@ const runMock = jest.spyOn(main, 'run')
 const timeRegex = /^\d{2}:\d{2}:\d{2}/
 
 // Mock the GitHub Actions core library
-let debugMock: jest.SpiedFunction<typeof core.debug>
-let errorMock: jest.SpiedFunction<typeof core.error>
 let getInputMock: jest.SpiedFunction<typeof core.getInput>
 let setFailedMock: jest.SpiedFunction<typeof core.setFailed>
-let setOutputMock: jest.SpiedFunction<typeof core.setOutput>
+
+let getConfigMock: jest.SpiedFunction<typeof UtilsConfig.getConfig>
+let apiInitMock: jest.SpiedFunction<typeof api.init>
+let getWorkflowIdMock: jest.SpiedFunction<typeof workflow.getWorkflowId>
+let getWorkflowRunIdMock: jest.SpiedFunction<typeof workflow.getWorkflowRunId>
+let waitWorkflowRunFinishMock: jest.SpiedFunction<
+  typeof workflow.waitWorkflowRunFinish
+>
 
 describe('action', () => {
+  const workflowInputs = {
+    cake: 'delicious'
+  }
+
+  let mockEnvConfig: any
+
   beforeEach(() => {
     jest.clearAllMocks()
 
-    debugMock = jest.spyOn(core, 'debug').mockImplementation()
-    errorMock = jest.spyOn(core, 'error').mockImplementation()
-    getInputMock = jest.spyOn(core, 'getInput').mockImplementation()
     setFailedMock = jest.spyOn(core, 'setFailed').mockImplementation()
-    setOutputMock = jest.spyOn(core, 'setOutput').mockImplementation()
+
+    getConfigMock = jest.spyOn(UtilsConfig, 'getConfig')
+    apiInitMock = jest.spyOn(api, 'init').mockImplementation()
+    getWorkflowIdMock = jest
+      .spyOn(workflow, 'getWorkflowId')
+      .mockImplementation()
+    getWorkflowRunIdMock = jest
+      .spyOn(workflow, 'getWorkflowRunId')
+      .mockImplementation()
+    waitWorkflowRunFinishMock = jest
+      .spyOn(workflow, 'waitWorkflowRunFinish')
+      .mockImplementation()
+
+    mockEnvConfig = {
+      token: 'secret',
+      ref: 'feature_branch',
+      repo: 'repository',
+      owner: 'owner',
+      workflow: 'workflow_name',
+      workflow_inputs: JSON.stringify(workflowInputs),
+      workflow_timeout_seconds: '60'
+    }
   })
 
-  it('sets the time output', async () => {
+  it('setFailed when no workflowRunId', async () => {
     // Set the action's inputs as return values from core.getInput()
-    getInputMock.mockImplementation(name => {
-      switch (name) {
-        case 'milliseconds':
-          return '500'
+    getInputMock.mockImplementation((input: string) => {
+      switch (input) {
+        case 'token':
+          return mockEnvConfig.token
+        case 'ref':
+          return mockEnvConfig.ref
+        case 'repo':
+          return mockEnvConfig.repo
+        case 'owner':
+          return mockEnvConfig.owner
+        case 'workflow':
+          return mockEnvConfig.workflow
+        case 'workflow_inputs':
+          return mockEnvConfig.workflow_inputs
+        case 'workflow_timeout_seconds':
+          return mockEnvConfig.workflow_timeout_seconds
         default:
-          return ''
+          throw new Error('invalid input requested')
       }
     })
 
@@ -48,42 +92,17 @@ describe('action', () => {
     expect(runMock).toHaveReturned()
 
     // Verify that all of the core library functions were called correctly
-    expect(debugMock).toHaveBeenNthCalledWith(1, 'Waiting 500 milliseconds ...')
-    expect(debugMock).toHaveBeenNthCalledWith(
-      2,
-      expect.stringMatching(timeRegex)
-    )
-    expect(debugMock).toHaveBeenNthCalledWith(
-      3,
-      expect.stringMatching(timeRegex)
-    )
-    expect(setOutputMock).toHaveBeenNthCalledWith(
-      1,
-      'time',
-      expect.stringMatching(timeRegex)
-    )
-    expect(errorMock).not.toHaveBeenCalled()
-  })
+    expect(getConfigMock).toHaveBeenCalledTimes(1)
+    expect(getConfigMock).toHaveReturnedWith(mockEnvConfig)
 
-  it('sets a failed status', async () => {
-    // Set the action's inputs as return values from core.getInput()
-    getInputMock.mockImplementation(name => {
-      switch (name) {
-        case 'milliseconds':
-          return 'this is not a number'
-        default:
-          return ''
-      }
+    expect(setFailedMock).not.toHaveBeenCalled()
+    expect(apiInitMock).toHaveBeenCalledWith(mockEnvConfig)
+    getWorkflowIdMock.mockImplementation(() => Promise.resolve(123456))
+
+    expect(getWorkflowIdMock).toHaveBeenCalledWith(input => {
+      console.log('getWorkflowIdMock input')
+      console.log(input)
+      return true
     })
-
-    await main.run()
-    expect(runMock).toHaveReturned()
-
-    // Verify that all of the core library functions were called correctly
-    expect(setFailedMock).toHaveBeenNthCalledWith(
-      1,
-      'milliseconds not a number'
-    )
-    expect(errorMock).not.toHaveBeenCalled()
   })
 })
