@@ -1,6 +1,5 @@
 # Dispatch remote workflow sync
 
-[![GitHub Super-Linter](https://github.com/stephdotnet/dispatch-remote-workflow-sync/actions/workflows/linter.yml/badge.svg)](https://github.com/super-linter/super-linter)
 ![CI](https://github.com/stephdotnet/dispatch-remote-workflow-sync/actions/workflows/ci.yml/badge.svg)
 [![Check dist/](https://github.com/stephdotnet/dispatch-remote-workflow-sync/actions/workflows/check-dist.yml/badge.svg)](https://github.com/stephdotnet/dispatch-remote-workflow-sync/actions/workflows/check-dist.yml)
 [![Coverage](./badges/coverage.svg)](./badges/coverage.svg)
