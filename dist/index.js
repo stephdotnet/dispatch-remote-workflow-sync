@@ -30093,7 +30093,7 @@ async function getWorkflowRunUrl(runId) {
 exports.getWorkflowRunUrl = getWorkflowRunUrl;
 async function getWorkflowRunIds(workflowId) {
     try {
-        const branchName = (0, branch_1.getBranchName)(config.ref) || config.ref;
+        const branchName = (0, branch_1.getBranchName)(config.ref);
         // https://docs.github.com/en/rest/reference/actions#list-workflow-runs
         const response = await octokit.rest.actions.listWorkflowRuns({
             owner: config.owner,
