@@ -1,15 +1,12 @@
 import { ActionConfig, getConfig } from '../src/utils/config'
 import * as core from '@actions/core'
 
-let coreErrorMock: jest.SpiedFunction<typeof core.error>
-let coreDebugMock: jest.SpiedFunction<typeof core.debug>
-
 describe('config', () => {
   beforeEach(() => {
     jest.clearAllMocks()
 
-    coreErrorMock = jest.spyOn(core, 'error').mockImplementation()
-    coreDebugMock = jest.spyOn(core, 'debug').mockImplementation()
+    jest.spyOn(core, 'error').mockImplementation()
+    jest.spyOn(core, 'debug').mockImplementation()
 
     jest.spyOn(core, 'getInput').mockImplementation((input: string) => {
       switch (input) {
