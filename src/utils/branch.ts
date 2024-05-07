@@ -12,7 +12,7 @@ function isTagRef(ref: string): boolean {
 }
 
 export function getBranchName(ref: string): string | undefined {
-  let branchName: string | undefined = undefined
+  let branchName: string = ref
   if (!isTagRef(ref)) {
     /**
      * The listRepoWorkflows request only accepts a branch name and not a ref (for some reason).
