@@ -162,7 +162,7 @@ export async function getWorkflowRunUrl(runId: number): Promise<string> {
 
 export async function getWorkflowRunIds(workflowId: number): Promise<number[]> {
   try {
-    const branchName = getBranchName(config.ref) || config.ref
+    const branchName = getBranchName(config.ref)
 
     // https://docs.github.com/en/rest/reference/actions#list-workflow-runs
     const response = await octokit.rest.actions.listWorkflowRuns({
