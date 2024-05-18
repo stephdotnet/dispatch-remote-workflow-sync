@@ -1,5 +1,6 @@
 import { ActionConfig, getConfig } from '../src/utils/config'
 import * as core from '@actions/core'
+import output from './factories/config.factory'
 
 describe('config', () => {
   beforeEach(() => {
@@ -43,6 +44,7 @@ describe('config', () => {
     expect(config.workflow).toStrictEqual(output.workflow)
     expect(config.workflowInputs).toStrictEqual(output.workflowInputs)
     expect(config.workflowTimeoutSeconds).toStrictEqual(60)
+    expect(config.pollIntervalMs).toStrictEqual(60)
   })
 
   it('should have a number for a workflow when given a workflow ID', () => {
@@ -93,28 +95,13 @@ describe('config', () => {
   })
 })
 
-const workflowInputs = {
-  foo: 'bar'
-}
-
 const inputs = {
   token: 'token',
   ref: 'main',
   repo: 'my-repo',
   owner: 'the-owner',
   workflow: 'workflow.yml',
-  workflow_inputs: JSON.stringify(workflowInputs),
+  workflow_inputs: JSON.stringify(output.workflowInputs),
   workflow_timeout_seconds: '60',
   poll_interval_ms: '60'
-}
-
-const output = {
-  token: 'token',
-  ref: 'main',
-  repo: 'my-repo',
-  owner: 'the-owner',
-  workflow: 'workflow.yml',
-  workflowInputs,
-  workflowTimeoutSeconds: 60,
-  pollIntervalMs: 60
 }
