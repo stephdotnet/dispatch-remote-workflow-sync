@@ -15,7 +15,6 @@ import {
   retryOrDie
 } from '../src/utils/api'
 import * as config from '../src/utils/config'
-import output from './factories/config.factory'
 import { randomUUID } from 'crypto'
 import configFactory from './factories/config.factory'
 
@@ -26,33 +25,48 @@ jest.mock('@actions/core')
 jest.mock('@actions/github')
 
 interface MockResponse {
-  data: any
+  data: unknown
   status: number
 }
 
-async function* mockPageIterator<T, P>(apiMethod: (params: P) => T, params: P) {
+async function* mockPageIterator<T, P>(
+  apiMethod: (params: P) => T,
+  params: P
+): AsyncGenerator<T, void, unknown> {
   yield apiMethod(params)
 }
+
+type getOctokitType = ReturnType<typeof github.getOctokit>
+type listWorkflowRunParams = Parameters<
+  getOctokitType['rest']['actions']['listWorkflowRuns']
+>[0]
+type createWorkflowDispatchParams = Parameters<
+  getOctokitType['rest']['actions']['createWorkflowDispatch']
+>[0]
 
 const mockOctokit = {
   rest: {
     actions: {
-      createWorkflowDispatch: async (_req?: any): Promise<MockResponse> => {
+      createWorkflowDispatch: async (
+        _req: createWorkflowDispatchParams
+      ): Promise<MockResponse> => {
         throw new Error('Should be mocked')
       },
-      getWorkflowRun: async (_req?: any): Promise<MockResponse> => {
+      getWorkflowRun: async (): Promise<MockResponse> => {
         throw new Error('Should be mocked')
       },
-      listRepoWorkflows: async (_req?: any): Promise<MockResponse> => {
+      listRepoWorkflows: async (): Promise<MockResponse> => {
         throw new Error('Should be mocked')
       },
-      listWorkflowRuns: async (_req?: any): Promise<MockResponse> => {
+      listWorkflowRuns: async (
+        _req: listWorkflowRunParams
+      ): Promise<MockResponse> => {
         throw new Error('Should be mocked')
       },
-      downloadWorkflowRunLogs: async (_req?: any): Promise<MockResponse> => {
+      downloadWorkflowRunLogs: async (): Promise<MockResponse> => {
         throw new Error('Should be mocked')
       },
-      listJobsForWorkflowRun: async (_req?: any): Promise<MockResponse> => {
+      listJobsForWorkflowRun: async (): Promise<MockResponse> => {
         throw new Error('Should be mocked')
       }
     }
@@ -67,9 +81,13 @@ describe('api', () => {
     getOctokitMock = jest.spyOn(github, 'getOctokit')
     getConfigMock = jest
       .spyOn(config, 'getConfig')
-      .mockImplementation(() => output)
+      .mockImplementation(() => configFactory)
 
-    jest.spyOn(github, 'getOctokit').mockReturnValue(mockOctokit as any)
+    jest
+      .spyOn(github, 'getOctokit')
+      .mockReturnValue(
+        mockOctokit as unknown as ReturnType<typeof github.getOctokit>
+      )
   })
 
   afterEach(() => {
@@ -87,7 +105,7 @@ describe('api', () => {
 
   describe('dispatchWorkflow', () => {
     it('should resolve after a successful dispatch', async () => {
-      jest
+      const createWorkflowDispatchMock = jest
         .spyOn(mockOctokit.rest.actions, 'createWorkflowDispatch')
         .mockReturnValue(
           Promise.resolve({
@@ -97,6 +115,7 @@ describe('api', () => {
         )
 
       await dispatchWorkflow('')
+      expect(createWorkflowDispatchMock).toHaveBeenCalled()
     })
 
     it('should throw if a non-204 status is returned', async () => {
@@ -120,8 +139,8 @@ describe('api', () => {
       let dispatchedId: string | undefined
       jest
         .spyOn(mockOctokit.rest.actions, 'createWorkflowDispatch')
-        .mockImplementation(async (req?: any) => {
-          dispatchedId = req.inputs.distinct_id
+        .mockImplementation(async req => {
+          dispatchedId = req?.inputs?.distinct_id as string
 
           return {
             data: undefined,
@@ -157,7 +176,7 @@ describe('api', () => {
         })
       )
 
-      expect(await getWorkflowId('slice.yml')).toStrictEqual(mockData[2]!.id)
+      expect(await getWorkflowId('slice.yml')).toStrictEqual(mockData[2].id)
     })
 
     it('should throw if a non-200 status is returned', async () => {
@@ -242,11 +261,12 @@ describe('api', () => {
 
     it('should filter by branch name', async () => {
       configFactory.ref = '/refs/heads/master'
-      let parsedRef!: string
+      let parsedRef: string | undefined
+
       jest
         .spyOn(mockOctokit.rest.actions, 'listWorkflowRuns')
-        .mockImplementation(async (req: any) => {
-          parsedRef = req.branch
+        .mockImplementation(async req => {
+          parsedRef = req?.branch
           const mockResponse: MockResponse = {
             data: {
               total_count: 0,
@@ -377,7 +397,7 @@ describe('api', () => {
     })
 
     it('should return a populated array', async () => {
-      const attempt = async () => {
+      const attempt = async (): Promise<number[]> => {
         return [0]
       }
 
@@ -386,11 +406,10 @@ describe('api', () => {
 
     it('should throw if the given timeout is exceeded', async () => {
       // Never return data.
-      const attempt = async () => []
+      const attempt = async (): Promise<[]> => []
 
       const retryOrDiePromise = retryOrDie(attempt, 1000)
       jest.advanceTimersByTime(2000)
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       jest.advanceTimersByTimeAsync(2000)
 
       await expect(retryOrDiePromise).rejects.toThrow(
@@ -514,7 +533,7 @@ describe('api', () => {
       })
 
       it('should return the steps for a failed Job', async () => {
-        const mockSteps = mockData.jobs[0]!.steps
+        const mockSteps = mockData.jobs[0].steps
         jest
           .spyOn(mockOctokit.rest.actions, 'listJobsForWorkflowRun')
           .mockReturnValue(
@@ -524,8 +543,8 @@ describe('api', () => {
             })
           )
 
-        const { steps } = (await getWorkflowRunFailedJobs(123456))[0]!
-        expect(steps).toHaveLength(mockData.jobs[0]!.steps.length)
+        const { steps } = (await getWorkflowRunFailedJobs(123456))[0]
+        expect(steps).toHaveLength(mockData.jobs[0].steps.length)
         for (let i = 0; i < mockSteps.length; i++) {
           expect(steps[i]?.name).toStrictEqual(mockSteps[i]?.name)
           expect(steps[i]?.number).toStrictEqual(mockSteps[i]?.number)
@@ -537,7 +556,6 @@ describe('api', () => {
 
     describe('getWorkflowRunActiveJobUrl', () => {
       let inProgressMockData: any
-
       beforeEach(() => {
         inProgressMockData = {
           ...mockData,
@@ -545,7 +563,7 @@ describe('api', () => {
             {
               ...mockData.jobs[0],
               status: 'in_progress',
-              conclusion: null
+              conclusion: null as string | null
             }
           ]
         }
@@ -662,7 +680,7 @@ describe('api', () => {
           jest
             .spyOn(mockOctokit.rest.actions, 'listJobsForWorkflowRun')
             // Final
-            .mockImplementation(() => {
+            .mockImplementation(async () => {
               inProgressMockData.jobs[0].status = 'in_progress'
 
               return Promise.resolve({
@@ -671,7 +689,7 @@ describe('api', () => {
               })
             })
             // First
-            .mockImplementationOnce(() => {
+            .mockImplementationOnce(async () => {
               inProgressMockData.jobs[0].status = 'unknown'
 
               return Promise.resolve({
@@ -680,7 +698,7 @@ describe('api', () => {
               })
             })
             // Second
-            .mockImplementationOnce(() =>
+            .mockImplementationOnce(async () =>
               Promise.resolve({
                 data: inProgressMockData,
                 status: 200
@@ -698,7 +716,7 @@ describe('api', () => {
         it('should return a URL if an in_progress job is found', async () => {
           jest
             .spyOn(mockOctokit.rest.actions, 'listJobsForWorkflowRun')
-            .mockImplementation(() =>
+            .mockImplementation(async () =>
               Promise.resolve({
                 data: inProgressMockData,
                 status: 200
@@ -775,7 +793,7 @@ describe('api', () => {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       jest.advanceTimersByTimeAsync(500)
 
-      await expect(retryPromise).rejects.toThrowError('some error')
+      await expect(retryPromise).rejects.toThrow('some error')
     })
   })
 })
