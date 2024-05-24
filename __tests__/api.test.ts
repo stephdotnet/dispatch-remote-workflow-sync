@@ -473,9 +473,12 @@ describe('api', () => {
       jobs: [
         {
           id: 123456789,
-          html_url: 'https://github.com/codex-/await-remote-run/runs/123456789',
+          html_url:
+            'https://github.com/codex-/await-remote-run/runs/123456789' as
+              | string
+              | null,
           status: 'completed',
-          conclusion: 'failure',
+          conclusion: 'failure' as string | null,
           name: 'test-run',
           steps: [
             {
@@ -555,7 +558,7 @@ describe('api', () => {
     })
 
     describe('getWorkflowRunActiveJobUrl', () => {
-      let inProgressMockData: any
+      let inProgressMockData: typeof mockData
       beforeEach(() => {
         inProgressMockData = {
           ...mockData,
