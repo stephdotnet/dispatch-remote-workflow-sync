@@ -1,26 +1,28 @@
 version: 2
 updates:
+  # Version updates are disabled: open-pull-requests-limit 0 stops Dependabot
+  # from opening routine "keep it fresh" pull requests. Security updates are a
+  # separate mechanism driven by advisories, they ignore this limit and keep
+  # working. The groups below apply to those, so a wave of advisories arrives
+  # as a single pull request instead of one per package.
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
+    open-pull-requests-limit: 0
     groups:
-      actions-minor:
-        update-types:
-          - minor
-          - patch
+      actions-security:
+        applies-to: security-updates
+        patterns:
+          - '*'
 
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
+    open-pull-requests-limit: 0
     groups:
-      npm-development:
-        dependency-type: development
-        update-types:
-          - minor
-          - patch
-      npm-production:
-        dependency-type: production
-        update-types:
-          - patch
+      npm-security:
+        applies-to: security-updates
+        patterns:
+          - '*'
